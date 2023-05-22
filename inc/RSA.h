@@ -1,18 +1,27 @@
 #pragma once
-#include <inc/PNG.h>
+#include <cmath>
+#include <iostream>
+#include <random>
+#include <ctime>
+#include <openssl/bn.h>
 
-class RSA
+using namespace std;
+
+class rsa
 {
 private:
-	int _public_key;
-	int _private_key;
-	vector<int> _prime;
-	int _n;
+    BIGNUM* _public_key;
+    BIGNUM* _private_key;
+    BIGNUM* _n;
+    int _keySize;
 public:
-	RSA();
-	void primeFiller();
-	int pickRandomPrime();
-	void setKeys();
-	~RSA();
+    rsa();
+    void keyGenerator();
+    void printBignum(const BIGNUM* num);
+    bool _gcd(const BIGNUM* a, const BIGNUM* b) const;
+    void decrypt(const BIGNUM* ciphertext, BIGNUM* plaintext);
+    void encrypt(const BIGNUM* plaintext, BIGNUM* ciphertext);
 };
+
+
 
