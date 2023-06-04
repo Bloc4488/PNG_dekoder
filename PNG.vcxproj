@@ -109,7 +109,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\Roman Skuratovich\OneDrive\Рабочий стол\PWR\6 sem\E-media\vcpkg\vcpkg\packages;C:\Users\Roman Skuratovich\OneDrive\Рабочий стол\PWR\6 sem\E-media\PNG\PNG_dekoder</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

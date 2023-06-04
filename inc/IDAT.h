@@ -11,6 +11,7 @@ public:
 	void show_chunk() const override;
 	vector<uint8_t> getChunkData();
 	void writeToFile(ofstream& out);
+	void writeToFileDecrypted(ofstream& out, vector<uint8_t> data);
 	bool assertChunk() const override;
 	~IDAT_chunk() {}
 };

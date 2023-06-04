@@ -8,6 +8,7 @@
 #include <inc/tEXt.h>
 #include <inc/tIME.h>
 #include <inc/default_chunk.h>
+#include <inc/RSA.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -19,14 +20,19 @@
 using namespace cv;
 
 
+enum RSA_algorithm {ECB, CBC, Library};
+enum SaveMode {Decrypt, Encrypt};
+
 class PNG
 {
 private:
-	vector<unique_ptr<Chunk>> chunks;
-	string file_name;
-	uint32_t header[2];
+	vector<unique_ptr<Chunk>> _chunks;
+	string _file_name;
+	uint32_t _header[2];
 	vector<uint8_t> _data_IDAT;
+	vector<uint8_t> _decompressed_data_IDAT;
 	int _bytesPerPixel;
+	rsa rsa;
 public:
 	PNG();
 	PNG(string file);
@@ -40,8 +46,12 @@ public:
 	void showInformationAllChunks();
 	void showNamesAllChunks();
 	void decompress_chunks_IDAT();
+	vector<uint8_t> copmpress_data(const vector<uint8_t> data);
 	void showFFT();
+	void getDataIDAT();
 	void anonymizePNG();
+	void savePNG(vector<uint8_t> decrypted_data, RSA_algorithm option, SaveMode mode);
 	void showImage();
+	void rsaProcess(RSA_algorithm option);
 	bool assertPNG();
 };

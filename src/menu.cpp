@@ -6,7 +6,7 @@ void Menu::Init_application()
 	int option;
 	string name;
 	do {
-		option = getOption();
+		option = getOptionMain();
 		switch (option)
 		{
 		case 1:
@@ -26,13 +26,18 @@ void Menu::Init_application()
 			png.showImage();
 			break;
 		case 6:
+			cout << "Switching to RSA modul" << endl << endl;
+			chooseRSA();
+			showApplicationInfo();
+			break;
+		case 7:
 			cout << "Closing program" << endl; 
 			break;
 		default:
 			cout << "There is no such option!" << endl;
 			break;
 		}
-	} while (option != 6);
+	} while (option != 7);
 }
 
 string Menu::getFileName()
@@ -74,16 +79,74 @@ void Menu::showApplicationInfo()
 	cout << "* 3 - Anonymize file                        *" << endl;
 	cout << "* 4 - Show FFT                              *" << endl;
 	cout << "* 5 - Show image                            *" << endl;
-	cout << "* 6 - Exit                                  *" << endl;
+	cout << "* 6 - RSA                                   *" << endl;
+	cout << "* 7 - Exit                                  *" << endl;
 	cout << "*********************************************" << endl;
 }
 
-int Menu::getOption()
+int Menu::getOptionMain()
 {
 	int menuOption = 0;
 	do {
-		cout << "Please choose option (1 - 6): ";
+		cout << "Please choose option (1 - 7): ";
 		cin >> menuOption;
-	} while (menuOption > 6 && menuOption < 1);
+	} while (menuOption > 7 && menuOption < 1);
 	return menuOption;
+}
+
+void Menu::chooseRSA()
+{
+	showRSAInfo();
+	int option;
+	string name;
+	do {
+		option = getOptionRSA();
+		switch (option)
+		{
+		case 1:
+			png.rsaProcess(ECB);
+			break;
+		case 2:
+			png.rsaProcess(CBC);
+			break;
+		case 3:
+			png.rsaProcess(Library);
+			break;
+		case 4:
+			cout << "Closing RSA modul" << endl << endl;
+			break;
+		default:
+			cout << "There is no such option!" << endl;
+			break;
+		}
+	} while (option != 4);
+}
+
+int Menu::getOptionRSA()
+{
+	int menuOption = 0;
+	do {
+		cout << "Please choose option (1 - 4): ";
+		cin >> menuOption;
+	} while (menuOption > 4 && menuOption < 1);
+	return menuOption;
+}
+
+void Menu::showRSAInfo()
+{
+	cout << "*********************************************" << endl;
+	cout << "* Welcome to RSA decrypt and encrypt modul. *" << endl;
+	cout << "* This modul can decrypt and encrypt        *" << endl;
+	cout << "* data from PNG files. In PNG file data is  *" << endl;
+	cout << "* located in IDAT chunks. Application       *" << endl;
+	cout << "* provides 2 methods of RSA decryption and  *" << endl;
+	cout << "* encryption: ECB and CBC. Also you have    *" << endl;
+	cout << "* option to use RSA algoryth from OpenSSL   *" << endl;
+	cout << "* library.                                  *" << endl;
+	cout << "* Options:                                  *" << endl;
+	cout << "* 1 - ECB                                   *" << endl;
+	cout << "* 2 - CBC                                   *" << endl;
+	cout << "* 3 - RSA from library                      *" << endl;
+	cout << "* 4 - Exit to main menu                     *" << endl;
+	cout << "*********************************************" << endl;
 }
