@@ -10,7 +10,7 @@ public:
 	IDAT_chunk(ifstream& stream, uint32_t length, char name[5]);
 	void show_chunk() const override;
 	vector<uint8_t> getChunkData();
-	void writeToFile(ofstream& out);
+	void writeToFile(ofstream& out) override;
 	void writeToFileDecrypted(ofstream& out, vector<uint8_t> data);
 	bool assertChunk() const override;
 	~IDAT_chunk() {}

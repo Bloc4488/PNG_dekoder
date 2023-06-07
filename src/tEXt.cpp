@@ -10,7 +10,7 @@ tEXt_chunk::tEXt_chunk(ifstream& stream, uint32_t length, char name[5])
 	stream.read(reinterpret_cast<char*>(data.data()), Length);
 	for (size_t i = 0; i < data.size(); i++)
 	{
-		if (data[i] == 0)
+		if (data[i] == 0x00)
 		{
 			nullSeparator = static_cast<int>(i);
 			break;
@@ -56,4 +56,26 @@ bool tEXt_chunk::assertChunk() const
 		if (_text[i] == 0) return false;
 	}
 	return true;
+}
+
+void tEXt_chunk::writeToFile(ofstream& out)
+{
+	uint32_t length = reverse_uint32_t(Length);
+	out.write(reinterpret_cast<char*>(&length), sizeof(length));
+	for (int i = 0; i < 4; i++)
+	{
+		out.write(reinterpret_cast<char*>(&Name[i]), sizeof(Name[i]));
+	}
+	for (auto& a : _keyword)
+	{
+		out.write(reinterpret_cast<char*>(&a), sizeof(a));
+	}
+	uint8_t Null = 0x00;
+	out.write(reinterpret_cast<char*>(&Null), sizeof(Null));
+	for (auto& a : _text)
+	{
+		out.write(reinterpret_cast<char*>(&a), sizeof(a));
+	}
+	uint32_t crc = reverse_uint32_t(CRC);
+	out.write(reinterpret_cast<char*>(&crc), sizeof(crc));
 }

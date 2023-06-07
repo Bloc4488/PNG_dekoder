@@ -45,23 +45,23 @@ string Menu::getFileName()
 	string Name;
 	cout << "You can choose from list or write ypur own path" << endl;
 	cout << "List: " << endl;
-	cout << "1 - linux.png" << endl;
-	cout << "2 - type_2.png" << endl;
-	cout << "3 - type_3.png" << endl;
-	cout << "4 - type_4.png" << endl;
-	cout << "5 - dice.png" << endl;
+	cout << "1 - dice.png" << endl;
+	cout << "2 - linux.png" << endl;
+	cout << "3 - type_2.png" << endl;
+	cout << "4 - type_3.png" << endl;
+	cout << "5 - type_4.png" << endl;
 	cout << "Please write FULL PATH to file(.png) or choose option: ";
 	cin >> Name;
 	if (Name == "1")
-		Name = "png_files/linux.png";
-	else if (Name == "2")
-		Name = "png_files/type_2.png";
-	else if (Name == "3")
-		Name = "png_files/type_3.png";
-	else if (Name == "4")
-		Name = "png_files/type_4.png";
-	else if (Name == "5")
 		Name = "png_files/dice.png";
+	else if (Name == "2")
+		Name = "png_files/linux.png";
+	else if (Name == "3")
+		Name = "png_files/type_2.png";
+	else if (Name == "4")
+		Name = "png_files/type_3.png";
+	else if (Name == "5")
+		Name = "png_files/type_4.png";
 	return Name;
 }
 
@@ -113,22 +113,25 @@ void Menu::chooseRSA()
 			png.rsaProcess(Library);
 			break;
 		case 4:
+			png.rsaSetKeylength();
+			break;
+		case 5:
 			cout << "Closing RSA modul" << endl << endl;
 			break;
 		default:
 			cout << "There is no such option!" << endl;
 			break;
 		}
-	} while (option != 4);
+	} while (option != 5);
 }
 
 int Menu::getOptionRSA()
 {
 	int menuOption = 0;
 	do {
-		cout << "Please choose option (1 - 4): ";
+		cout << "Please choose option (1 - 5): ";
 		cin >> menuOption;
-	} while (menuOption > 4 && menuOption < 1);
+	} while (menuOption > 5 && menuOption < 1);
 	return menuOption;
 }
 
@@ -147,6 +150,7 @@ void Menu::showRSAInfo()
 	cout << "* 1 - ECB                                   *" << endl;
 	cout << "* 2 - CBC                                   *" << endl;
 	cout << "* 3 - RSA from library                      *" << endl;
-	cout << "* 4 - Exit to main menu                     *" << endl;
+	cout << "* 4 - Set RSA key length                    *" << endl;
+	cout << "* 5 - Exit to main menu                     *" << endl;
 	cout << "*********************************************" << endl;
 }

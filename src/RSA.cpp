@@ -7,7 +7,20 @@ rsa::rsa()
     _publicKey = BN_new();
     _n = BN_new();
     BIGNUM* randIV = BN_new();
-    BN_rand(randIV, _keySize, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD);
+    BN_rand(randIV, _keySize, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD);
+    IV = BIGNUMToVector(randIV);
+    BN_clear_free(randIV);
+    keyGenerator();
+}
+
+rsa::rsa(size_t length)
+{
+    _keySize = length;
+    _privateKey = BN_new();
+    _publicKey = BN_new();
+    _n = BN_new();
+    BIGNUM* randIV = BN_new();
+    BN_rand(randIV, _keySize, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD);
     IV = BIGNUMToVector(randIV);
     BN_clear_free(randIV);
     keyGenerator();
@@ -30,7 +43,8 @@ void rsa::keyGenerator()
     BN_sub_word(q, 1);
     BN_mul(phi, p, q, ctx);
 
-    BN_rand_range(e, phi);
+    //BN_rand_range(e, phi);
+    BN_set_word(e, 65537);
     while (!_gcd(e, phi))
     {
         BN_add(e, e, BN_value_one());
@@ -119,62 +133,47 @@ void rsa::decrypt(const BIGNUM* ciphertext, BIGNUM* plaintext)
 
 vector<uint8_t> rsa::encryptECBmode(vector<uint8_t> data)
 {
-	vector<uint8_t> dataHash;
-	size_t blockSize = _keySize / 8 - 1;
-	for (size_t i = 0; i < data.size(); i += blockSize)
-	{
-		size_t blockLength = min(blockSize, data.size() - i);
-		vector<uint8_t> block(data.begin() + i, data.begin() + i + blockLength);
-		block.insert(block.begin(), 0x01);
-        BIGNUM* m = BN_new(), *cipher = BN_new();  
+    vector<uint8_t> dataHash;
+    size_t blockSize = floor(_keySize / 8) - 1;
+    for (size_t i = 0; i < data.size(); i += blockSize)
+    {
+        vector<uint8_t> encryptVector;
+        encryptVector.resize(blockSize + 1);
+        BIGNUM* m = BN_new(), *cipher = BN_new();
+        size_t blocklength = min(blockSize, data.size() - i);
+        vector<uint8_t> block(data.begin() + i, data.begin() + i + blocklength);
         vectorToBIGNUM(block, m);
         encrypt(m, cipher);
-		vector<uint8_t> encrypt;
-        encrypt = BIGNUMToVector(cipher);
-        if (encrypt.size() < blockSize + 1)
-        {
-            uint8_t numberOfElements = blockSize - encrypt.size() + 2;
-            while (encrypt.size() != blockSize + 1)
-            {
-                encrypt.push_back(0x00);
-            }
-            encrypt.push_back(numberOfElements);
-        }
-        else if (encrypt.size() == blockSize + 1)
-        {
-            encrypt.push_back(0x01);
-        }
-        dataHash.insert(dataHash.end(), encrypt.begin(), encrypt.end());
+        BIGNUMToVector(cipher, encryptVector);
+        dataHash.insert(dataHash.end(), encryptVector.begin(), encryptVector.end());
         BN_clear_free(m);
         BN_clear_free(cipher);
-	}
+    }
     return dataHash;
 }
 
-vector<uint8_t> rsa::decryptECBmode(vector<uint8_t> data)
+vector<uint8_t> rsa::decryptECBmode(vector<uint8_t> data, size_t imageNumBytes)
 {
     vector<uint8_t> dataClean;
-    size_t blockSize = _keySize / 8 + 1;
-
+    size_t blockSize = floor(_keySize / 8);
     for (size_t i = 0; i < data.size(); i += blockSize)
     {
+        vector<uint8_t> decryptVector;
+        decryptVector.resize(blockSize - 1);
         size_t blockLength = min(blockSize, data.size() - i);
         vector<uint8_t> block(data.begin() + i, data.begin() + i + blockLength);
-        uint8_t numberOfElements = block.back();
-        for (size_t j = 0; j < numberOfElements; j++)
-        {
-            block.erase(block.end() - 1);
-        }
-        BIGNUM* m = BN_new(), *plain = BN_new();
+        BIGNUM* m = BN_new(), * plain = BN_new();
         vectorToBIGNUM(block, m);
         decrypt(m, plain);
-        vector<uint8_t> decrypt;
-        decrypt.resize(blockSize - 1);
-        decrypt = BIGNUMToVector(plain);
-        decrypt.erase(decrypt.begin());
-        dataClean.insert(dataClean.end(), decrypt.begin(), decrypt.end());
+        BIGNUMToVector(plain, decryptVector);
+        dataClean.insert(dataClean.end(), decryptVector.begin(), decryptVector.end());
         BN_clear_free(m);
         BN_clear_free(plain);
+    }
+    if (dataClean.size() > imageNumBytes)
+    {
+        size_t bytesToErase = dataClean.size() - imageNumBytes;
+        dataClean.erase(dataClean.end() - blockSize + 1, dataClean.end() - blockSize + 1 + bytesToErase);
     }
     return dataClean;
 }
@@ -182,116 +181,118 @@ vector<uint8_t> rsa::decryptECBmode(vector<uint8_t> data)
 vector<uint8_t> rsa::encryptCBCmode(vector<uint8_t> data)
 {
     vector<uint8_t> dataHash;
-    size_t blockSize = _keySize / 8 - 1;
-    vector<uint8_t> IV_crypt = IV;
-    for (size_t i = 0; i < data.size(); i += blockSize)
+    size_t blockSize = floor(_keySize / 8) - 1;
+    vector<uint8_t> IV_encrypt = IV;
+    for (int i = 0; i < data.size(); i += blockSize)
     {
+        vector<uint8_t> encryptVector;
+        BIGNUM* m = BN_new(), * cipher = BN_new();
+        encryptVector.resize(blockSize + 1);
         size_t blockLength = min(blockSize, data.size() - i);
         vector<uint8_t> block(data.begin() + i, data.begin() + i + blockLength);
-        block.insert(block.begin(), 0x01);
-        transform(block.begin(), block.end(), IV_crypt.begin(), block.begin(), [](auto e1, auto e2) {return e1 ^ e2;});        
-        BIGNUM* m = BN_new(), * cipher = BN_new();
+        while (block.size() != blockSize)
+        {
+            block.insert(block.begin(), 0x00);
+        }
+        while (IV_encrypt.size() != block.size())
+        {
+            IV_encrypt.pop_back();
+        }
+        transform(block.begin(), block.end(), IV_encrypt.begin(), block.begin(), [](auto a, auto b) {return a ^ b;});
         vectorToBIGNUM(block, m);
         encrypt(m, cipher);
-        vector<uint8_t> encrypt;
-        encrypt = BIGNUMToVector(cipher);
-        IV_crypt = encrypt;
-        if (encrypt.size() < blockSize + 1)
-        {
-            uint8_t numberOfElements = blockSize - encrypt.size() + 2;
-            while (encrypt.size() != blockSize + 1)
-            {
-                encrypt.push_back(0x00);
-            }
-            encrypt.push_back(numberOfElements);
-        }
-        else if (encrypt.size() == blockSize + 1)
-        {
-            encrypt.push_back(0x01);
-        }
-        while (IV_crypt.size() < blockSize + 1)
-        {
-            IV_crypt.push_back(0x00);
-        }
-        dataHash.insert(dataHash.end(), encrypt.begin(), encrypt.end());
+        BIGNUMToVector(cipher, encryptVector);
+        IV_encrypt = encryptVector;
+        dataHash.insert(dataHash.end(), encryptVector.begin(), encryptVector.end());
         BN_clear_free(m);
         BN_clear_free(cipher);
     }
     return dataHash;
 }
 
-vector<uint8_t> rsa::decryptCBCmode(vector<uint8_t> data)
+vector<uint8_t> rsa::decryptCBCmode(vector<uint8_t> data, size_t imageNumBytes)
 {
     vector<uint8_t> dataClean;
-    size_t blockSize = _keySize / 8 + 1;
-    vector<uint8_t> IV_crypt = IV;
+    size_t blockSize = floor(_keySize / 8);
+    vector<uint8_t> IV_decrypt = IV;
     for (size_t i = 0; i < data.size(); i += blockSize)
     {
+        vector<uint8_t> decryptVector;
+        decryptVector.resize(blockSize - 1);
         size_t blockLength = min(blockSize, data.size() - i);
         vector<uint8_t> block(data.begin() + i, data.begin() + i + blockLength);
-        uint8_t numberOfElements = block.back();
-        for (size_t j = 0; j < numberOfElements; j++)
-        {
-            block.erase(block.end() - 1);
-        }
         BIGNUM* m = BN_new(), * plain = BN_new();
         vectorToBIGNUM(block, m);
         decrypt(m, plain);
-        vector<uint8_t> decrypt;
-        decrypt = BIGNUMToVector(plain);
-        transform(decrypt.begin(), decrypt.end(), IV_crypt.begin(), decrypt.begin(), [](auto e1, auto e2) {return e2 ^ e1;});
-        decrypt.erase(decrypt.begin());
-        IV_crypt = block;
-        while (IV_crypt.size() < blockSize - 1)
+        BIGNUMToVector(plain, decryptVector);
+        while (IV_decrypt.size() != decryptVector.size())
         {
-            IV_crypt.push_back(0x00);
+            IV_decrypt.pop_back();
         }
-        dataClean.insert(dataClean.end(), decrypt.begin(), decrypt.end());
+        transform(decryptVector.begin(), decryptVector.end(), IV_decrypt.begin(), decryptVector.begin(), [](auto a, auto b) {return a ^ b;});
+        dataClean.insert(dataClean.end(), decryptVector.begin(), decryptVector.end());
+        IV_decrypt = block;
         BN_clear_free(m);
         BN_clear_free(plain);
+    }
+    if (dataClean.size() > imageNumBytes)
+    {
+        size_t bytesToErase = dataClean.size() - imageNumBytes;
+        dataClean.erase(dataClean.end() - blockSize + 1, dataClean.end() - blockSize + 1 + bytesToErase);
     }
     return dataClean;
 }
 
 vector<uint8_t> rsa::encryptLibrarymode(vector<uint8_t> data)
 {
-    OpenSSL_add_all_algorithms();
-    RSA* public_key;
-    public_key = RSA_new();
-    RSA_set0_key(public_key, _n, _publicKey, NULL);
-    size_t encryptedSize = RSA_size(public_key);
-    vector<uint8_t> cipher;
-    for (size_t i = 0; i < data.size(); i += encryptedSize)
-    {
-        size_t blockLength = min(encryptedSize, data.size() - i);
-        vector<uint8_t> block(data.begin() + i, data.begin() + i + blockLength);
-        unsigned char* bloc = reinterpret_cast<unsigned char*>(block.data()), *encryp = (unsigned char*)malloc(blockLength);
-        vector<uint8_t> encrypt(blockLength);
-        if (RSA_public_encrypt(blockLength, bloc, encryp, public_key, RSA_NO_PADDING) < 0)
-        {
+    RSA* publicKey = RSA_new();
+    RSA_set0_key(publicKey, _n, _publicKey, NULL);
+    const uint8_t* inputData = data.data();
+    int inputSize = data.size();
+    const int encryptedDataSize = RSA_size(publicKey);
+    std::vector<uint8_t> encryptedData;
+    const int blockSize = RSA_size(publicKey) - 11;
+    for (int i = 0; i < inputSize; i += blockSize) {
+        int remainingBytes = inputSize - i;
+        int currentBlockSize = remainingBytes > blockSize ? blockSize : remainingBytes;
+        std::vector<uint8_t> currentBlock(currentBlockSize);
+        memcpy(currentBlock.data(), inputData + i, currentBlockSize);
+        std::vector<uint8_t> encryptedBlock(encryptedDataSize);
+        int encryptedSize = RSA_public_encrypt(currentBlockSize, currentBlock.data(), encryptedBlock.data(), publicKey, RSA_PKCS1_PADDING);
+        if (encryptedSize == -1) {
             char buf[128];
             cerr << "RSA_public_encrypt: " << ERR_error_string(ERR_get_error(), buf) << endl;
         }
-        cipher.insert(cipher.end(), encrypt.begin(), encrypt.end());
+        encryptedData.insert(encryptedData.end(), encryptedBlock.begin(), encryptedBlock.begin() + encryptedSize);
     }
-    return cipher;
+    //RSA_free(publicKey);
+    return encryptedData;
 }
 
 vector<uint8_t> rsa::decryptLibrarymode(vector<uint8_t> data)
 {
-    /*vector<uint8_t> plain;
-    EVP_PKEY_CTX* ctxEVP = EVP_PKEY_CTX_new(_pkey, NULL);
-    size_t plainLength;
-    EVP_PKEY_decrypt_init(ctxEVP);
-    EVP_PKEY_CTX_set_rsa_padding(ctxEVP, RSA_PKCS1_OAEP_PADDING);
-    EVP_PKEY_decrypt(ctxEVP, NULL, &plainLength, data.data(), data.size());
-
-    plain.resize(plainLength);
-    EVP_PKEY_decrypt(ctxEVP, plain.data(), &plainLength, data.data(), data.size());
-
-    EVP_PKEY_CTX_free(ctxEVP);
-    return plain;*/
-    return vector<uint8_t>();
+    RSA* privateKey = RSA_new();
+    RSA_set0_key(privateKey, _n, _publicKey, _privateKey);
+    const uint8_t* inputData = data.data();
+    int inputSize = data.size();
+    const int decryptedDataSize = RSA_size(privateKey);
+    std::vector<uint8_t> decryptedData;
+    const int blockSize = RSA_size(privateKey);
+    for (int i = 0; i < inputSize; i += blockSize) {
+        int remainingBytes = inputSize - i;
+        int currentBlockSize = remainingBytes > blockSize ? blockSize : remainingBytes;
+        std::vector<uint8_t> currentBlock(currentBlockSize);
+        memcpy(currentBlock.data(), inputData + i, currentBlockSize);
+        std::vector<uint8_t> decryptedBlock(decryptedDataSize);
+        int decryptedSize = RSA_private_decrypt(currentBlockSize, currentBlock.data(), decryptedBlock.data(), privateKey, RSA_PKCS1_PADDING);
+        if (decryptedSize == -1) {
+            char buf[128];
+            cerr << "RSA_public_encrypt: " << ERR_error_string(ERR_get_error(), buf) << endl;
+        }
+        decryptedData.insert(decryptedData.end(), decryptedBlock.begin(), decryptedBlock.begin() + decryptedSize);
+    }
+    //RSA_free(privateKey);
+    return decryptedData;
 }
 
 

@@ -14,7 +14,7 @@ private:
 public:
 	PLTE_chunk(ifstream& stream, uint32_t length, char name[5]);
 	void show_chunk() const override;
-	void writeToFile(ofstream& out);
+	void writeToFile(ofstream& out) override;
 	bool assertChunk() const override;
 	~PLTE_chunk() {}
 };

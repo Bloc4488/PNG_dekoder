@@ -57,6 +57,7 @@ void PNG::readFile()
 		else if (string(Name) == "IDAT")
 		{
 			chunk = make_unique<IDAT_chunk>(file, Length, Name);
+			_imageNumBytes += chunk->Length;
 		}
 		else if (string(Name) == "PLTE")
 		{
@@ -342,39 +343,47 @@ void PNG::rsaProcess(RSA_algorithm option)
 	switch (option)
 	{
 		case ECB:
-			encrypted_data = rsa.encryptECBmode(_data_IDAT);
-
-			//savePNG(encrypted_data, option, Encrypt);
-			decrypted_data = rsa.decryptECBmode(encrypted_data);
-			for (int i = 0; i < decrypted_data.size(); i++)
+			encrypted_data = rsaCrypt.encryptECBmode(_data_IDAT);
+			savePNG(encrypted_data, option, Encrypt);
+			decrypted_data = rsaCrypt.decryptECBmode(encrypted_data, _imageNumBytes);
+			if (_data_IDAT != decrypted_data)
 			{
-				if (_data_IDAT[i] != decrypted_data[i])
-					cout << i << " ";
+				cerr << "Something went wrong with encryption or decryption!" << endl;
 			}
-			/*if (_data_IDAT != decrypted_data)
-			{
-				cerr << "Invalid decryption! Something went wrong!" << endl;
-			}
-			else
-			{
+			else 
 				savePNG(decrypted_data, option, Decrypt);
-			}*/
 			break;
 		case CBC:
-			encrypted_data = rsa.encryptCBCmode(_data_IDAT);
-			//savePNG(encrypted_data, option, Encrypt);
-			decrypted_data = rsa.decryptCBCmode(encrypted_data);
-			//savePNG(decrypted_data, option, Decrypt);
+			encrypted_data = rsaCrypt.encryptCBCmode(_data_IDAT);
+			savePNG(encrypted_data, option, Encrypt);
+			decrypted_data = rsaCrypt.decryptCBCmode(encrypted_data, _imageNumBytes);
+			if (_data_IDAT != decrypted_data)
+			{
+				cerr << "Something went wrong with encryption or decryption!" << endl;
+			}
+			else
+				savePNG(decrypted_data, option, Decrypt);
 			break;
 		case Library:
-			encrypted_data = rsa.encryptLibrarymode(_data_IDAT);
-			decrypted_data = rsa.decryptLibrarymode(encrypted_data);
+			encrypted_data = rsaCrypt.encryptLibrarymode(_data_IDAT);
+			savePNG(encrypted_data, option, Encrypt);
+			decrypted_data = rsaCrypt.decryptLibrarymode(encrypted_data);
 			if (decrypted_data != _data_IDAT)
 			{
-				cout << "Loch" << endl;
+				cout << "Invalid encryption or decryption!" << endl;
 			}
+			else
+				savePNG(decrypted_data, option, Decrypt);
 			break;
 	}
+}
+
+void PNG::rsaSetKeylength()
+{
+	size_t length;
+	cout << "Please write key length in bites(default 1024 bites): ";
+	cin >> length;
+	rsaCrypt = rsa(length);
 }
 
 void PNG::savePNG(vector<uint8_t> dataRSA, RSA_algorithm option, SaveMode mode)
@@ -411,27 +420,16 @@ void PNG::savePNG(vector<uint8_t> dataRSA, RSA_algorithm option, SaveMode mode)
 	out.write(reinterpret_cast<char*>(&_header[1]), sizeof(_header[1]));
 	for (auto& a : _chunks)
 	{
-		if (string(a->Name) == "IHDR")
-		{
-			IHDR_chunk* chunk = static_cast<IHDR_chunk*>(a.get());
-			chunk->writeToFile(out);
-		}
-		else if (string(a->Name) == "PLTE")
-		{
-			PLTE_chunk* chunk = static_cast<PLTE_chunk*>(a.get());
-			chunk->writeToFile(out);
-		}
-		else if (string(a->Name) == "IDAT")
+		if (string(a->Name) == "IDAT")
 		{
 			IDAT_chunk* chunk = static_cast<IDAT_chunk*>(a.get());
 			vector<uint8_t> data(dataRSA.begin(), dataRSA.begin() + chunk->Length);
 			chunk->writeToFileDecrypted(out, data);
 			dataRSA.erase(dataRSA.begin(), dataRSA.begin() + chunk->Length);
 		}
-		else if (string(a->Name) == "IEND")
+		else
 		{
-			IEND_chunk* chunk = static_cast<IEND_chunk*>(a.get());
-			chunk->writeToFile(out);
+			a->writeToFile(out);
 		}
 	}
 	for (auto& a : dataRSA)

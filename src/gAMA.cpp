@@ -20,3 +20,17 @@ bool gAMA_chunk::assertChunk() const
 	cout << "Asserting chunk gAMA!" << endl;
 	return true;
 }
+
+void gAMA_chunk::writeToFile(ofstream& out)
+{
+	uint32_t length = reverse_uint32_t(Length);
+	out.write(reinterpret_cast<char*>(&length), sizeof(length));
+	for (int i = 0; i < 4; i++)
+	{
+		out.write(reinterpret_cast<char*>(&Name[i]), sizeof(Name[i]));
+	}
+	uint32_t gamma = reverse_uint32_t(_gamma);
+	out.write(reinterpret_cast<char*>(&gamma), sizeof(gamma));
+	uint32_t crc = reverse_uint32_t(CRC);
+	out.write(reinterpret_cast<char*>(&crc), sizeof(crc));
+}

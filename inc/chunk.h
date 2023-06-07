@@ -28,4 +28,5 @@ public:
 			((num & 0x00ff0000) >> 8) |
 			((num & 0xff000000) >> 24);
 	}
+	virtual void writeToFile(ofstream& out) = 0;
 };

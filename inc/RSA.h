@@ -18,9 +18,10 @@ private:
     BIGNUM* _n;
     size_t _keySize;
     vector<uint8_t> IV;
-    EVP_PKEY* _pkey;
+    //EVP_PKEY* _pkey;
 public:
     rsa();
+    rsa(size_t length);
     void keyGenerator();
     bool _gcd(const BIGNUM* a, const BIGNUM* b) const;
     void printBignum(const BIGNUM* num);
@@ -30,9 +31,9 @@ public:
     void decrypt(const BIGNUM* ciphertext, BIGNUM* plaintext);
     void encrypt(const BIGNUM* plaintext, BIGNUM* ciphertext);
     vector<uint8_t> encryptECBmode(vector<uint8_t> data);
-    vector<uint8_t> decryptECBmode(vector<uint8_t> data);
+    vector<uint8_t> decryptECBmode(vector<uint8_t> data, size_t imageNumBytes);
     vector<uint8_t> encryptCBCmode(vector<uint8_t> data);
-    vector<uint8_t> decryptCBCmode(vector<uint8_t> data);
+    vector<uint8_t> decryptCBCmode(vector<uint8_t> data, size_t imageNumBytes);
     vector<uint8_t> encryptLibrarymode(vector<uint8_t> data);
     vector<uint8_t> decryptLibrarymode(vector<uint8_t> data);
 };

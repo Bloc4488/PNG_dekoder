@@ -31,3 +31,22 @@ bool tIME_chunk::assertChunk() const
 	if (unsigned(_second) < 0 || unsigned(_second) > 60) return false;
 	return true;
 }
+
+void tIME_chunk::writeToFile(ofstream& out)
+{
+	uint32_t length = reverse_uint32_t(Length);
+	out.write(reinterpret_cast<char*>(&length), sizeof(length));
+	for (int i = 0; i < 4; i++)
+	{
+		out.write(reinterpret_cast<char*>(&Name[i]), sizeof(Name[i]));
+	}
+	uint16_t year = ((_year & 0xFF) << 8) | ((_year >> 8) & 0xFF);
+	out.write(reinterpret_cast<char*>(&year), sizeof(year));
+	out.write(reinterpret_cast<char*>(&_month), sizeof(_month));
+	out.write(reinterpret_cast<char*>(&_day), sizeof(_day));
+	out.write(reinterpret_cast<char*>(&_hour), sizeof(_hour));
+	out.write(reinterpret_cast<char*>(&_minute), sizeof(_minute));
+	out.write(reinterpret_cast<char*>(&_second), sizeof(_second));
+	uint32_t crc = reverse_uint32_t(CRC);
+	out.write(reinterpret_cast<char*>(&crc), sizeof(crc));
+}

@@ -21,6 +21,6 @@ public:
 	uint32_t getHeight() { return _height; }
 	uint8_t getColorType() { return _color_type; }
 	bool assertChunk() const override;
-	void writeToFile(ofstream& out);
+	void writeToFile(ofstream& out) override;
 };
 

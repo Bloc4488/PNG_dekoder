@@ -29,10 +29,11 @@ private:
 	vector<unique_ptr<Chunk>> _chunks;
 	string _file_name;
 	uint32_t _header[2];
+	size_t _imageNumBytes = 0;
 	vector<uint8_t> _data_IDAT;
 	vector<uint8_t> _decompressed_data_IDAT;
 	int _bytesPerPixel;
-	rsa rsa;
+	rsa rsaCrypt;
 public:
 	PNG();
 	PNG(string file);
@@ -53,5 +54,6 @@ public:
 	void savePNG(vector<uint8_t> decrypted_data, RSA_algorithm option, SaveMode mode);
 	void showImage();
 	void rsaProcess(RSA_algorithm option);
+	void rsaSetKeylength();
 	bool assertPNG();
 };
