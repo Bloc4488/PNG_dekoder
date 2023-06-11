@@ -55,5 +55,6 @@ public:
 	void showImage();
 	void rsaProcess(RSA_algorithm option);
 	void rsaSetKeylength();
+	size_t getKeyLength();
 	bool assertPNG();
 };

@@ -183,7 +183,7 @@ vector<uint8_t> rsa::encryptCBCmode(vector<uint8_t> data)
     vector<uint8_t> dataHash;
     size_t blockSize = floor(_keySize / 8) - 1;
     vector<uint8_t> IV_encrypt = IV;
-    for (int i = 0; i < data.size(); i += blockSize)
+    for (size_t i = 0; i < data.size(); i += blockSize)
     {
         vector<uint8_t> encryptVector;
         BIGNUM* m = BN_new(), * cipher = BN_new();
@@ -248,11 +248,11 @@ vector<uint8_t> rsa::encryptLibrarymode(vector<uint8_t> data)
     RSA* publicKey = RSA_new();
     RSA_set0_key(publicKey, _n, _publicKey, NULL);
     const uint8_t* inputData = data.data();
-    int inputSize = data.size();
+    size_t inputSize = data.size();
     const int encryptedDataSize = RSA_size(publicKey);
     std::vector<uint8_t> encryptedData;
     const int blockSize = RSA_size(publicKey) - 11;
-    for (int i = 0; i < inputSize; i += blockSize) {
+    for (size_t i = 0; i < inputSize; i += blockSize) {
         int remainingBytes = inputSize - i;
         int currentBlockSize = remainingBytes > blockSize ? blockSize : remainingBytes;
         std::vector<uint8_t> currentBlock(currentBlockSize);
@@ -274,11 +274,11 @@ vector<uint8_t> rsa::decryptLibrarymode(vector<uint8_t> data)
     RSA* privateKey = RSA_new();
     RSA_set0_key(privateKey, _n, _publicKey, _privateKey);
     const uint8_t* inputData = data.data();
-    int inputSize = data.size();
+    size_t inputSize = data.size();
     const int decryptedDataSize = RSA_size(privateKey);
     std::vector<uint8_t> decryptedData;
     const int blockSize = RSA_size(privateKey);
-    for (int i = 0; i < inputSize; i += blockSize) {
+    for (size_t i = 0; i < inputSize; i += blockSize) {
         int remainingBytes = inputSize - i;
         int currentBlockSize = remainingBytes > blockSize ? blockSize : remainingBytes;
         std::vector<uint8_t> currentBlock(currentBlockSize);
@@ -293,6 +293,11 @@ vector<uint8_t> rsa::decryptLibrarymode(vector<uint8_t> data)
     }
     //RSA_free(privateKey);
     return decryptedData;
+}
+
+size_t rsa::getKeyLength()
+{
+    return _keySize;
 }
 
 

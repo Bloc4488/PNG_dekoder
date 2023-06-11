@@ -150,7 +150,7 @@ void Menu::showRSAInfo()
 	cout << "* 1 - ECB                                   *" << endl;
 	cout << "* 2 - CBC                                   *" << endl;
 	cout << "* 3 - RSA from library                      *" << endl;
-	cout << "* 4 - Set RSA key length                    *" << endl;
+	cout << "* 4 - Set RSA key length (now: " << png.getKeyLength() << ")        *" << endl;
 	cout << "* 5 - Exit to main menu                     *" << endl;
 	cout << "*********************************************" << endl;
 }

@@ -217,6 +217,7 @@ void PNG::showFFT()
 	// => log(1 + sqrt(Re(DFT(I))^2 + Im(DFT(I))^2))
 	split(complexI, planes);                   // planes[0] = Re(DFT(I), planes[1] = Im(DFT(I))
 	magnitude(planes[0], planes[1], planes[0]);// planes[0] = magnitude
+	phase(planes[0], planes[1], planes[1]);
 	Mat magI = planes[0];
 	magI += Scalar::all(1);                    // switch to logarithmic scale
 	log(magI, magI);
@@ -240,6 +241,7 @@ void PNG::showFFT()
 	// viewable image form (float between values 0 and 1).
 	imshow("Input Image", I);    // Show the result
 	imshow("spectrum magnitude", magI);
+	imshow("spectrum phase", planes[1]);
 	//IDFT
 	Mat inverse;
 	idft(complexI, inverse, DFT_SCALE | DFT_REAL_OUTPUT);
@@ -343,6 +345,7 @@ void PNG::rsaProcess(RSA_algorithm option)
 	switch (option)
 	{
 		case ECB:
+
 			encrypted_data = rsaCrypt.encryptECBmode(_data_IDAT);
 			savePNG(encrypted_data, option, Encrypt);
 			decrypted_data = rsaCrypt.decryptECBmode(encrypted_data, _imageNumBytes);
@@ -383,7 +386,15 @@ void PNG::rsaSetKeylength()
 	size_t length;
 	cout << "Please write key length in bites(default 1024 bites): ";
 	cin >> length;
-	rsaCrypt = rsa(length);
+	if (length % 8 != 0)
+	{
+		cerr << "Key length must be divisible by 8! Try again!" << endl;
+	}
+	else
+	{
+		rsaCrypt = rsa(length);
+		cout << "Keys have been successfully generated! Key length: " << length << endl;
+	}
 }
 
 void PNG::savePNG(vector<uint8_t> dataRSA, RSA_algorithm option, SaveMode mode)
@@ -438,4 +449,9 @@ void PNG::savePNG(vector<uint8_t> dataRSA, RSA_algorithm option, SaveMode mode)
 	}
 	out.close();
 	cout << "Image successfully saved: " << name << endl;
+}
+
+size_t PNG::getKeyLength()
+{
+	return rsaCrypt.getKeyLength();
 }

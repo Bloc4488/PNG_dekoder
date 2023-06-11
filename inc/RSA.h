@@ -35,6 +35,7 @@ public:
     vector<uint8_t> encryptCBCmode(vector<uint8_t> data);
     vector<uint8_t> decryptCBCmode(vector<uint8_t> data, size_t imageNumBytes);
     vector<uint8_t> encryptLibrarymode(vector<uint8_t> data);
+    size_t getKeyLength();
     vector<uint8_t> decryptLibrarymode(vector<uint8_t> data);
 };
 
